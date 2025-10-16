@@ -9,7 +9,7 @@ class univeriate():
         return quan,qual
         
     def Descriptive_Table (quan,datapool):
-        descriptive=pd.DataFrame(index=["mean","median","mode","Q1:25%","Q2:50%","Q3:75%","99%","Q4:100%","IQR","Min","Max","Lesser","Greater"],columns=quan)
+        descriptive=pd.DataFrame(index=["mean","median","mode","Q1:25%","Q2:50%","Q3:75%","99%","Q4:100%","IQR","Min","Max","Lesser","Greater","Kurtosis","Skewness"],columns=quan)
         for ColumnName in quan:
             descriptive[ColumnName]["mean"]=datapool[ColumnName].mean()
             descriptive[ColumnName]["median"]=datapool[ColumnName].median()
@@ -24,6 +24,8 @@ class univeriate():
             descriptive[ColumnName]["Max"]=datapool[ColumnName].max()
             descriptive[ColumnName]["Lesser"]=datapool.describe()[ColumnName]["25%"]-(1.5*descriptive[ColumnName]["IQR"])
             descriptive[ColumnName]["Greater"]=datapool.describe()[ColumnName]["75%"]+(1.5*descriptive[ColumnName]["IQR"])
+            descriptive[ColumnName]["Kurtosis"]=datapool[ColumnName].kurtosis()
+            descriptive[ColumnName]["Skewness"]=datapool[ColumnName].skew()
         return  descriptive
 
     def Indentify_Outlier(quan,descriptive):
