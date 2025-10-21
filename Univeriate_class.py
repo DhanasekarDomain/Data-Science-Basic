@@ -1,15 +1,32 @@
 import pandas as pd
 import numpy as np
+from sklearn.impute import SimpleImputer
+from matplotlib import pyplot
+from scipy.stats import norm
+import seaborn as sb
 
 class univeriate():
     
     def quanqual(datapool):
         quan=datapool.select_dtypes(include=['number']).columns
         qual=datapool.select_dtypes(exclude=['number']).columns
-        return quan,qual
+        return quan,qual              
+        
+    def Preprocessing_Data(datapool,quan,qual):
+        imp_mean = SimpleImputer(missing_values=np.nan,strategy='constant',fill_value=0).fit(datapool[quan])
+        df_quan=imp_mean.transform(datapool[quan])
+        df_quan=pd.DataFrame(df_quan,columns=quan)
+        datapool[quan]=df_quan
+       
+        imp_mean2 = SimpleImputer(missing_values=np.nan,strategy="most_frequent").fit(datapool[qual])
+        df_qual=imp_mean2.transform(datapool[qual])
+        df_qual=pd.DataFrame(df_qual,columns=qual)
+        datapool[qual]=df_qual
+        return datapool[quan],datapool[qual]
         
     def Descriptive_Table (quan,datapool):
-        descriptive=pd.DataFrame(index=["mean","median","mode","Q1:25%","Q2:50%","Q3:75%","99%","Q4:100%","IQR","Min","Max","Lesser","Greater","Kurtosis","Skewness"],columns=quan)
+        descriptive=pd.DataFrame(index=["mean","median","mode","Q1:25%","Q2:50%","Q3:75%","99%","Q4:100%","IQR","Min","Max",
+                                        "Lesser","Greater","Kurtosis","Skewness","Variance","Standard deviation"],columns=quan)
         for ColumnName in quan:
             descriptive[ColumnName]["mean"]=datapool[ColumnName].mean()
             descriptive[ColumnName]["median"]=datapool[ColumnName].median()
@@ -26,6 +43,8 @@ class univeriate():
             descriptive[ColumnName]["Greater"]=datapool.describe()[ColumnName]["75%"]+(1.5*descriptive[ColumnName]["IQR"])
             descriptive[ColumnName]["Kurtosis"]=datapool[ColumnName].kurtosis()
             descriptive[ColumnName]["Skewness"]=datapool[ColumnName].skew()
+            descriptive[ColumnName]["Variance"]=datapool[ColumnName].var()
+            descriptive[ColumnName]["Standard deviation"]=datapool[ColumnName].std()
         return  descriptive
 
     def Indentify_Outlier(quan,descriptive):
@@ -52,5 +71,25 @@ class univeriate():
             frequency_table["Relative_Frequency"]=(frequency_table["Frequency"]/103)
             frequency_table["Cumlative_Frequency"]= frequency_table["Relative_Frequency"].cumsum()
             return frequency_table
-
         
+    def get_pdf_probability(datapool,startrange,endrange):
+        ax = sb.distplot(datapool,kde=True,kde_kws={'color':'Blue'},color='Green')
+        pyplot.axvline(startrange,color='Red')
+        pyplot.axvline(endrange,color='Red')
+
+        print(f'Mean={datapool.mean():.3f}, Standard Deviation={datapool.std():.3f}')
+
+        dist = norm(datapool.mean(),datapool.std())
+    
+        values = range(startrange,endrange)
+        probabilities = [dist.pdf(value) for value in values]    
+        prob=sum(probabilities)
+        print(f"The area between range({startrange},{endrange}):{prob:.4f}")
+        return prob
+
+    def STDND_z_score (datapool):
+        mean = datapool.mean()
+        std = datapool.std()       
+        z_scores = (datapool - mean) / std     
+        sb.distplot(z_scores, kde=True,kde_kws={'color':'Blue'},color='Green')
+        return z_scores
